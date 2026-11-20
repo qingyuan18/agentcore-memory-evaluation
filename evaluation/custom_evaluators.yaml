@@ -1,0 +1,59 @@
+# 自定义评估器定义 (字段说明见 evaluation/custom.py 顶部)。
+# 本文件随评估 worker 一起打包; judge / derived 类型也可以在单次评估时用 --custom-file 内联传入, 无需重新部署。
+evaluators:
+  - name: MemoryRecallQuality
+    type: judge
+    description: 回答是否正确使用了长期记忆
+    level: TRACE
+    instructions: |
+      评估助手在最后一轮是否正确使用了用户的长期记忆。
+      用户消息开头 <用户长期记忆> 标签里是系统检索到的该用户长期记忆, recall 工具的结果也是长期记忆。
+      - 问题涉及用户本人信息时, 记忆里有相关内容, 回答应准确使用它
+      - 记忆里有相关内容却说"不知道/没有记录", 属于召回失败
+      - 回答中出现记忆和对话里都没有的用户个人信息, 属于编造
+      - 记忆里确实没有相关内容时, 如实说明没有记录是正确行为
+      - 问题与用户个人信息无关时, 只要没有编造个人信息即视为满足
+    rating_scale:
+      - label: 正确使用
+        value: 1.0
+        definition: "准确使用了相关记忆, 或在确无记忆时如实说明"
+      - label: 部分使用
+        value: 0.5
+        definition: "用到了部分相关记忆, 但遗漏了明显相关的内容"
+      - label: 召回失败
+        value: 0.0
+        definition: "记忆里有相关内容却说不知道或答错"
+      - label: 编造
+        value: 0.0
+        definition: "给出了记忆和对话中都不存在的用户个人信息"
+    pass_threshold: 0.5
+
+  - name: MemoryAnswerMatchesReference
+    type: judge
+    description: 数据集回放专用, 回答中的用户事实与参考答案一致
+    needs_reference: true
+    instructions: |
+      对比助手最后一轮回答与参考答案中的用户事实(城市、职业、偏好等)。
+      参考答案里的每个事实都被正确表达得 1.0; 缺失或错误按比例扣分;
+      回答多出的、与对话或记忆一致的补充信息不扣分。
+      参考答案要求"不能编造"时, 回答承认不知道得 1.0, 编造得 0.0。
+
+  - name: StrictHelpfulness
+    type: derived
+    description: 基于内置 Helpfulness, 改为更严格的中文客服标准
+    base: Helpfulness
+    system_prompt: |
+      You are an objective judge evaluating how helpful an AI assistant's final response is to a Chinese-speaking user.
+      Be strict: a response that answers correctly but adds unnecessary filler, emojis, or repeated offers of help
+      should not receive the top score. Consider correctness, directness and whether the user's need is fully met.
+
+  - name: NoImplementationLeak
+    type: code
+    description: 回答不能暴露"工具""记忆库"、记忆标签等实现细节
+    function: evaluation.custom_code.memory_rules:no_implementation_leak
+
+  - name: AnswerInChinese
+    type: code
+    description: 最后一轮回答以中文为主
+    function: evaluation.custom_code.memory_rules:answer_in_chinese
+    params: {min_ratio: 0.3}

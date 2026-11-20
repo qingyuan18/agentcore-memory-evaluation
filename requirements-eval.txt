@@ -1,0 +1,6 @@
+# 评估 worker (AgentCore Runtime, aarch64 / Python 3.13) 及本机运行评估的依赖
+bedrock-agentcore>=1.0
+strands-agents[openai]>=1.47,<2
+strands-agents-evals==1.5.0
+boto3>=1.40
+python-dotenv>=1.0

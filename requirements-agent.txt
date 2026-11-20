@@ -1,0 +1,8 @@
+# AgentCore Runtime 代码包依赖 (aarch64 / Python 3.13)
+bedrock-agentcore>=1.0
+strands-agents[otel,openai]>=1.47,<2
+mem0ai>=2.0.15,<3
+psycopg[binary,pool]>=3.1
+boto3>=1.40
+# ADOT: Runtime 以 opentelemetry-instrument 启动, 在中国区需要较新版本(>=0.21)才能向 *.amazonaws.com.cn 导出
+aws-opentelemetry-distro>=0.21,<1

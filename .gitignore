@@ -1,0 +1,13 @@
+# 本地配置(含密钥), 不要提交
+.env
+
+# 虚拟环境 / 打包产物 / 本地评估输出
+.venv/
+build/
+eval_output/
+.sessions/
+
+# Python / 系统文件
+__pycache__/
+*.pyc
+.DS_Store

@@ -1,0 +1,22 @@
+# 内联自定义评估器示例: 评估时用 --custom-file 传给 worker, 不需要重新打包部署。
+# 内联只允许 judge / derived; code 类型必须写进打包内的 evaluation/custom_evaluators.yaml。
+#   python scripts/run_eval.py --worker-arn $EVAL_ARN --custom-file evaluation/examples/inline_evaluators.yaml \
+#       --evaluators PersonalizedTone,ConciseAnswer sessions --runtime-id $RUNTIME_ID --since 24h
+evaluators:
+  - name: PersonalizedTone
+    type: judge
+    description: 已知用户姓名时, 回答是否自然地个性化称呼
+    level: TRACE
+    instructions: |
+      如果用户长期记忆或对话里出现了用户的名字, 助手的最后一轮回答应自然地使用它(如"小李,..."),
+      没有出现名字时不应编造称呼。生硬重复名字、或已知名字却完全不用, 都要扣分。
+    pass_threshold: 0.6
+
+  - name: ConciseAnswer
+    type: derived
+    description: 基于内置 Conciseness, 要求个人信息类问题一两句话答完
+    base: Conciseness
+    system_prompt: |
+      You judge the conciseness of an AI assistant's final response to a Chinese-speaking user.
+      For questions about the user's own facts or preferences, the ideal answer states the facts in one or two
+      sentences. Penalize bullet lists, markdown emphasis, emojis and follow-up offers that add no information.
